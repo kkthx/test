@@ -13,10 +13,11 @@
 ##########        BEGIN User part            ##########
 ##########       You can change it           ##########
 #######################################################
-CFLAGS = -Wall -g
-LDFLAGS =
+CFLAGS = -Wall -g -fPIC
+LDFLAGS = -shared
 SOURCES = ./src/main.c ./src/person.c
 NAME = prog
+LIB = libperson.so
 #######################################################
 ##########        END User part              ##########
 #######################################################
@@ -30,7 +31,10 @@ OBJECTS = $(SOURCES:.c=.o)
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $(NAME)
+	$(CC) $(OBJECTS) -o $(NAME)
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $(LIB)
+
+$(NAME2): $
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@

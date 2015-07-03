@@ -13,7 +13,7 @@ static void set_name(struct person* self, const char* p_name)
 			if (self->pd->name)
 				free(self);
 			if (p_name) {
-				self->pd->name = (char*) malloc((strlen(p_name)) * sizeof(char));
+				self->pd->name = (char*) malloc((strlen(p_name)+1) * sizeof(char));
 				strcpy(self->pd->name, p_name);
 			} else {
 				self->pd->name = 0;
@@ -39,8 +39,9 @@ struct person* create(const char* p_name)
 	result->set_name = &set_name;
 	result->get_name = &get_name;
 
+	result->pd = (struct person_data*) malloc(sizeof(struct person_data));
+	result->pd->name = 0;
 	if (p_name) {
-		result->pd = (struct person_data*) malloc(sizeof(struct person_data));
 		result->pd->name = (char*) malloc((strlen(p_name)+1) * sizeof(char));
 		strcpy(result->pd->name, p_name);
 	}

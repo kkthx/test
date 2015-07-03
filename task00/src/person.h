@@ -1,16 +1,11 @@
-struct person_ctx; //kontekst
+struct person_data;
 
-struct person
-{
-	struct person_ctx *ctx;
-	void (*set_name)(struct person *self, const char *name);
-	const char* (*get_name)(struct person *self);
+struct person {
+	void (*set_name)(struct person* self, const char* p_name);
+	const char* (*get_name)(struct person* self);
+	struct person_data* pd;
 };
 
-extern struct person* create();
-void delete(struct person *self);
-
-
-
-
+struct person* create(const char* p_name);
+void destroy(struct person* p_person);
 

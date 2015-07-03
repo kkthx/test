@@ -1,66 +1,60 @@
-#include <stdio.h>
+#include "person.h"
 #include <stdlib.h>
 #include <string.h>
-#include "person.h"
 
-struct person_ctx
-{
-	char *name;
+struct person_data {
+	char* name;
 };
 
-//static?
-static void *set_name(struct person *self, const char *name)
+static void set_name(struct person* self, const char* p_name)
 {
-    self->ctx = malloc(sizeof(struct person));
-    self->ctx->name = malloc(strlen(name)+1);
-    strcpy(self->ctx->name, name);
-/*
-	if (self->ctx == NULL && self->ctx->name == NULL)
-	{
-		free(self->ctx->name);
+	if (self) {
+		if (self->pd) {
+			if (self->pd->name)
+				free(self);
+			if (p_name) {
+				self->pd->name = (char*) malloc((strlen(p_name)) * sizeof(char));
+				strcpy(self->pd->name, p_name);
+			} else {
+				self->pd->name = 0;
+			}
+		} else {
+			self->pd->name = (char*) malloc((strlen(p_name)) * sizeof(char));
+			strcpy(self->pd->name, p_name);
+		}
 	}
-	else if (self->ctx)
-	{
-		self->ctx = malloc(sizeof(struct person));
-		self->ctx->name = malloc(strlen(name)+1);
-		strcpy(self->ctx->name, name);
-	}
-*/
 }
 
-
-const char* get_name(struct person *self)
+static const char* get_name(struct person* self)
 {
-	return self->ctx->name;
+	if (self && self->pd)
+		return self->pd->name;
+	return 0;
 }
 
-struct person *create()
+struct person* create(const char* p_name)
 {
-	struct person *result = malloc(sizeof(struct person));
-	result->ctx = 0;
-	result->set_name = (void*)set_name;
-	result->get_name = get_name;
+	struct person* result = (struct person*) malloc(sizeof(struct person));
+	result->set_name = &set_name;
+	result->get_name = &get_name;
+
+	if (p_name) {
+		result->pd = (struct person_data*) malloc(sizeof(struct person_data));
+		result->pd->name = (char*) malloc((strlen(p_name)) * sizeof(char));
+		strcpy(result->pd->name, p_name);
+	}
+
 	return result;
 }
 
-
-void delete(struct person *self)
+void destroy(struct person* p_person)
 {
-	if (self)
-	{
-		if (self->ctx)
-		{
-			if (self->ctx->name)
-			{
-				free(self->ctx->name);
-			}
-			free(self->ctx);
+	if (p_person) {
+		if (p_person->pd) {
+			if (p_person->pd->name)
+				free(p_person->pd->name);
 		}
-		free(self);
+		free(p_person);
 	}
 }
-
-
-
-
 

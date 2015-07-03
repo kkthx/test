@@ -19,6 +19,7 @@ static void set_name(struct person* self, const char* p_name)
 				self->pd->name = 0;
 			}
 		} else {
+			self->pd = malloc(sizeof(struct person_data));
 			self->pd->name = (char*) malloc((strlen(p_name)) * sizeof(char));
 			strcpy(self->pd->name, p_name);
 		}

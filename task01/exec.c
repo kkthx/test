@@ -19,11 +19,10 @@ int main(int argc, char **argv)
 
 	pthread_create(&tid, NULL, (void*)f1, NULL);
 
-	printf("proces po pthread_create\n   pid=%d\nparent=%d\n\n", getpid(), getppid());
-
-	pthread_join(tid, NULL);
+//	pthread_join(tid, NULL);
 
 
+	while(1) sleep(10);
 
 
 

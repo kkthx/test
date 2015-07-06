@@ -12,6 +12,7 @@ void f1(void)
 	else //parent
 		printf("\nwątek po fork [rodzic]\n   pid=%d\nparent=%d\n\n", getpid(), getppid());
 
+	//return 0;
 }
 
 int main(int argc, char **argv)
@@ -23,6 +24,9 @@ int main(int argc, char **argv)
 	pthread_create(&tid, NULL, (void*)f1, NULL);
 
 	pthread_join(tid, NULL);
+
+	while(1)
+		sleep(10);
 
 
 

@@ -1,6 +1,6 @@
 #Compilers
-CC=gcc 
-CXX=g++
+CC=clang
+CXX=clang++
 CIDL=tao_idl
 
 #IDL(s) directories

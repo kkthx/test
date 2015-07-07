@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1436264338 source:/home/student/Desktop/test/day02/Server/main.c
+	<stdio.h>
+	<stdlib.h>
+	<unistd.h>
+	<string.h>
+	<sys/socket.h>
+	<sys/types.h>
+	<sys/epoll.h>
+	<arpa/inet.h>
+	<signal.h>
+

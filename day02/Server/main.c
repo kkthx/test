@@ -8,23 +8,31 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
-#define BUFF_SIZE 1024
+#define BUF_SIZE 1024
+#define MAXUSERS 100
 
 int srv_fd = -1;
 int cli_fd = -1;
 int epoll_fd = -1;
-struct epoll_event e, es[100];
+struct epoll_event e, es[MAXUSERS];
 
 int i = 0;
 
 ssize_t msg_len = -1;
 
-
-
 struct sockaddr_in srv_addr;
 struct sockaddr_in cli_addr;
 socklen_t cli_addr_len;
 
+
+typedef struct
+{
+	int id;
+	char username[BUF_SIZE];
+}
+user;
+
+user users[MAXUSERS];
 
 
 void closeSockets(int arg)
@@ -41,7 +49,8 @@ int svHandler(void)
 {
 
 	cli_fd = accept(srv_fd, (struct sockaddr*) &cli_addr, &cli_addr_len);
-	if (cli_fd < 0) {
+	if (cli_fd < 0)
+	{
 		printf("Cannot accept client\n");
 		close(epoll_fd);
 		close(srv_fd);
@@ -49,7 +58,8 @@ int svHandler(void)
 	}
 
 	e.data.fd = cli_fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cli_fd, &e) < 0) {
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cli_fd, &e) < 0)
+	{
 		printf("Cannot accept client\n");
 		close(epoll_fd);
 		close(srv_fd);
@@ -58,6 +68,102 @@ int svHandler(void)
 }
 
 
+
+
+int clHandler(struct epoll_event *ev)
+{
+
+	printf("data.fd = %d\n", cli_fd);
+	fflush(stdout);
+	if (ev->events & EPOLLIN)
+	{
+		char *recv_buf = 0;
+		char *send_buf = 0;
+
+		if (read(cli_fd, &msg_len, sizeof(size_t)) > 0)
+		{
+			recv_buf = malloc(msg_len*sizeof(char));
+			send_buf = malloc(BUF_SIZE*sizeof(char));
+			memset(recv_buf, 0, msg_len);
+			memset(recv_buf, 0, msg_len);
+			read(cli_fd, recv_buf, msg_len);
+
+			switch (recv_buf[0])
+			{
+				case '1':
+					printf("AckNack\n");
+					break;
+				case '2':
+					printf("LogIn\n");
+					char *username = malloc((msg_len-2)*sizeof(char));
+					memcpy(username, recv_buf+2, msg_len-2);
+                    username[msg_len-2] = 0;
+                    printf("username = %s\n", username);
+					for (int i=0; i<MAXUSERS; ++i)
+					{
+						if (users[i].id == -1)
+						{
+							//add user to db
+
+						}
+						else
+						{
+							if (strcmp(username, users[i].username) == 0)
+							{
+								//write error thet user exists
+							}
+
+						}
+					}
+					free(username);
+					break;
+				case '3':
+					printf("MessageTo\n");
+					break;
+				case '4':
+					printf("MessageFrom\n");
+					break;
+				case '5':
+					printf("Broadcast\n");
+					break;
+				case '6':
+					printf("UserList\n");
+					break;
+				case '7':
+					printf("UserListReply\n");
+					break;
+				default:
+					printf("Unknown message: %s\n", recv_buf);
+					break;
+			}
+
+
+			write(cli_fd, &msg_len, sizeof(size_t));
+			write(cli_fd, send_buf, msg_len);
+
+
+
+			fflush(stdout);
+
+			//if (strcmp(buf, "aa") == 0)
+			//  printf("aa\n");
+
+		}
+
+		else //
+		{
+			printf("Client disconnected %d\n", ev->data.fd);
+			fflush(stdout);
+
+			close(cli_fd);
+			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
+			//cli_fd = -1;
+		}
+		free(recv_buf);
+		free(send_buf);
+	}
+
+}
 
 
 int main(int argc, const char *argv[])
@@ -75,8 +181,10 @@ int main(int argc, const char *argv[])
 		port = atoi(argv[1]);
 	}
 
-
-
+	for (int i=0; i<MAXUSERS; ++i)
+	{
+		users[i].id = -1;
+	}
 
 
 	memset(&srv_addr, 0, sizeof(srv_addr));
@@ -84,7 +192,8 @@ int main(int argc, const char *argv[])
 	memset(&e, 0, sizeof(e));
 
 	srv_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-	if (srv_fd < 0) {
+	if (srv_fd < 0)
+	{
 		printf("Cannot create socket\n");
 		return 1;
 	}
@@ -92,20 +201,23 @@ int main(int argc, const char *argv[])
 	srv_addr.sin_family = AF_INET;
 	srv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	srv_addr.sin_port = htons(port);
-	if (bind(srv_fd, (struct sockaddr*) &srv_addr, sizeof(srv_addr)) < 0) {
+	if (bind(srv_fd, (struct sockaddr*) &srv_addr, sizeof(srv_addr)) < 0)
+	{
 		printf("Cannot bind socket\n");
 		close(srv_fd);
 		return 1;
 	}
 
-	if (listen(srv_fd, 100) < 0) {
+	if (listen(srv_fd, MAXUSERS) < 0)
+	{
 		printf("Cannot listen\n");
 		close(srv_fd);
 		return 1;
 	}
 
-	epoll_fd = epoll_create(100);
-	if (epoll_fd < 0) {
+	epoll_fd = epoll_create(MAXUSERS);
+	if (epoll_fd < 0)
+	{
 		printf("Cannot create epoll\n");
 		close(srv_fd);
 		return 1;
@@ -113,124 +225,35 @@ int main(int argc, const char *argv[])
 
 	e.events = EPOLLIN;
 	e.data.fd = srv_fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, srv_fd, &e) < 0) {
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, srv_fd, &e) < 0)
+	{
 		printf("Cannot add server socket to epoll\n");
 		close(epoll_fd);
 		close(srv_fd);
 		return 1;
 	}
 
-	for(;;) {
+	for(;;)
+	{
 		i = epoll_wait(epoll_fd, es, 2, -1);
-		if (i < 0) {
+		if (i < 0)
+		{
 			printf("Cannot wait for events\n");
 			close(epoll_fd);
 			close(srv_fd);
 			return 1;
 		}
 
-		for (--i; i > -1; --i) {
-			if (es[i].data.fd == srv_fd) {
+		for (--i; i > -1; --i)
+		{
+			if (es[i].data.fd == srv_fd)
+			{
 				svHandler();
 			}
 			//else {
-			if (es[i].data.fd == cli_fd) {
-				if (es[i].events & EPOLLIN)
-				{
-					char *buf;
-
-					if (read(cli_fd, &msg_len, sizeof(size_t)) > 0)
-					{
-						buf = malloc(msg_len*sizeof(char));
-						memset(buf, 0, msg_len);
-						read(cli_fd, buf, msg_len);
-
-						printf("msg len=%d\n", msg_len);
-
-						printf("    msg=%s\n", buf);//+sizeof(ssize_t));
-
-						fflush(stdout);
-
-						write(cli_fd, &msg_len, sizeof(size_t));
-						write(cli_fd, buf, msg_len);
-
-						//if (strcmp(buff, "aa") == 0)
-						//  printf("aa\n");
-						free(buf);
-					}
-
-					else //
-					{
-						printf("Client disconnected");
-						fflush(stdout);
-
-						close(cli_fd);
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
-						//cli_fd = -1;
-					}
-
-
-
-
-
-					/*
-
-					   if (read(cli_fd, &msg_len, sizeof(ssize_t)))
-					   {
-					   printf("msg len = %d\n", msg_len);
-					   fflush(stdout);
-					   memset(buff, 0, BUFF_SIZE);
-
-					   read(cli_fd, buff, msg_len);
-					   printf("msg = %s\n", buff);
-					   fflush(stdout);
-					   write(cli_fd, buff, msg_len);
-
-					   if (strcmp(buff, "aa") == 0)
-					   printf("aa\n");
-
-					   }
-					   else
-					   {
-					   printf("Client disconnected");
-					   fflush(stdout);
-
-					   close(cli_fd);
-					   epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
-					   }
-
-*/
-
-
-					/*
-
-					//memset(buff, 0, BUFF_SIZE);
-
-					if (msg_len > 0)
-					{
-					printf("Msg len: %d, msg: %s\n", msg_len, buff);
-					fflush(stdout);
-					write(cli_fd, buff, msg_len);
-
-					if (strcmp(buff, "aa") == 0)
-					printf("aa\n");
-
-					}
-
-					else //
-					{
-					printf("Client disconnected");
-					fflush(stdout);
-
-					close(cli_fd);
-					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
-					//cli_fd = -1;
-					}
-
-					//epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
-					//cli_fd = -1;
-					*/
-				}
+			if (es[i].data.fd == cli_fd)
+			{
+				clHandler(&es[i]);
 			}
 		}
 		}

@@ -1,8 +1,11 @@
 #include "users.h"
 #include "defs.h"
 
-void login(user *users, int id, char *recv_buf, char *send_buf)
+void login(user *users, int id, char *recv_buf)
 {
+	char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+    memset(send_buf, 0, BUF_SIZE+1);
+
     if (strlen(recv_buf) > 2 && recv_buf[0] == '2' && recv_buf[1] == '.')
     {
         char *username = malloc(sizeof(char)*strlen(recv_buf));
@@ -36,6 +39,9 @@ void login(user *users, int id, char *recv_buf, char *send_buf)
         strcpy(send_buf, "1.1.No user name set");
     }
 
+    send_data(id, send_buf);
+
+    free(send_buf);
 }
 
 
@@ -82,8 +88,11 @@ void print_users(user *users)
     }
 }
 
-void user_list(user *users, char *send_buf)
+void user_list(user *users, int id)
 {
+	char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+    memset(send_buf, 0, BUF_SIZE+1);
+
     char userlist[BUF_SIZE];
     strcpy(userlist, "7");
     for (int i=0; i<MAXUSERS; ++i)
@@ -94,5 +103,58 @@ void user_list(user *users, char *send_buf)
             strcat(userlist, users[i].username);
         }
     }
+
     strcpy(send_buf, userlist);
+
+    send_data(id, send_buf);
+
+    free(send_buf);
 }
+
+
+void send_message(user *users, int id, char *recv_buf)
+{
+	char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+    memset(send_buf, 0, BUF_SIZE+1);
+
+    if (strlen(recv_buf) > 2 && (recv_buf[0] == '3' || recv_buf[0] == '5') && recv_buf[1] == '.')
+    {
+        char *username = malloc(sizeof(char)*strlen(recv_buf));
+        memset(username, 0, strlen(recv_buf));
+        memcpy(username, recv_buf+2, strlen(recv_buf)-2);
+
+        strcpy(send_buf, "1.1.Unknown format");
+
+        for (int i=0; i<MAXUSERS; ++i)
+        {
+            if (strcmp(username, users[i].username) == 0)
+            {
+                strcpy(send_buf, "1.1.No such user");
+                break;
+            }
+        }
+
+        free(username);
+    }
+    else
+    {
+        strcpy(send_buf, "1.1.No user name set");
+    }
+
+    send_data(id, send_buf);
+
+    free(send_buf);
+}
+
+
+void send_data(int *fd, char *send_data)
+{
+
+    size_t msg_len = strlen(send_data)+1;
+
+    write(fd, &msg_len, sizeof(size_t));
+    write(fd, send_data, msg_len);
+
+}
+
+

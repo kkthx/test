@@ -10,9 +10,10 @@ typedef struct
 }
 user;
 
-int add_user(user *users, int id, char *username);
+void login(user *users, int id, char *recv_buf, char *send_buf);
 int delete_user(user *users, char *username);
-void print_users(user *users);
+char* print_users(user *users);
+void user_list(user *users, char *send_buf);
 
 
 #endif

@@ -1,29 +1,47 @@
 #include "users.h"
 #include "defs.h"
 
-
-int add_user(user *users, int id, char *username)
+void login(user *users, int id, char *recv_buf, char *send_buf)
 {
-    for (int i=0; i<MAXUSERS; ++i)
+    if (strlen(recv_buf) > 2 && recv_buf[0] == '2' && recv_buf[1] == '.')
     {
-        //user exists
-        if (strcmp(username, users[i].username) == 0)
-		{
-			return 1;
-		}
+        char *username = malloc(sizeof(char)*strlen(recv_buf));
+        memset(username, 0, strlen(recv_buf));
+        memcpy(username, recv_buf+2, strlen(recv_buf)-2);
 
-        //found free place, adding user
-		if (users[i].id == -1)
-		{
-            strcpy(users[i].username, username);
-            users[i].id = id;
-            return 0;
-		}
-	}
+        printf("len=%d, s='%s'", strlen(username), username);
 
-    //too many users connected
-    return -1;
+        strcpy(send_buf, "1.1.Too many users connected");
+        for (int i=0; i<MAXUSERS; ++i)
+        {
+
+            if (strcmp(username, users[i].username) == 0)
+            {
+                strcpy(send_buf, "1.1.User exists");
+                break;
+            }
+
+            //found free place, adding user
+            if (users[i].id == -1)
+            {
+                strcpy(users[i].username, username);
+                users[i].id = id;
+                strcpy(send_buf, "1.0");
+                break;
+            }
+        }
+
+
+
+        free(username);
+    }
+    else
+    {
+        strcpy(send_buf, "1.1.No user name set");
+    }
+
 }
+
 
 int delete_user(user *users, char *username)
 {
@@ -31,22 +49,48 @@ int delete_user(user *users, char *username)
     {
         //user exists, delete then
         if (strcmp(username, users[i].username) == 0)
-		{
+        {
             memcpy(users[i].username, 0, 1);
             users[i].id = -1;
-			return 0;
-		}
-	}
+            return 0;
+        }
+    }
 
     //user not found
     return 1;
 }
 
-void print_users(user *users)
+char* print_users(user *users)
 {
+    char userlist[BUF_SIZE];
+    strcpy(userlist, "7");
+    printf("userlist: %s\n", userlist);
     for (int i=0; i<MAXUSERS; ++i)
     {
         printf("%02d: %02d %s\n", i, users[i].id, users[i].username);
+        if (users[i].id != -1)
+        {
+            strcat(userlist, ".");
+            strcat(userlist, users[i].username);
+            printf("userlist: %s\n", userlist);
+        }
     }
+    printf("userlist: %s\n", userlist);
+    return userlist;
 }
 
+void user_list(user *users, char *send_buf)
+{
+    char userlist[BUF_SIZE];
+    strcpy(userlist, "7");
+    for (int i=0; i<MAXUSERS; ++i)
+    {
+        printf("%02d: %02d %s\n", i, users[i].id, users[i].username);
+        if (users[i].id != -1)
+        {
+            strcat(userlist, ".");
+            strcat(userlist, users[i].username);
+        }
+    }
+    strcpy(send_buf, userlist);
+}

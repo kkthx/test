@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
+
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -97,27 +97,7 @@ int clHandler(struct epoll_event *ev)
 					break;
 				case '2':
 					printf("LogIn\n");
-					char *username = malloc((msg_len-2)*sizeof(char));
-					memcpy(username, recv_buf+2, msg_len-2);
-                    username[msg_len-2] = 0;
-                    printf("username = %s\n", username);
-
-					result = add_user(&users, ev->data.fd, username);
-
-					if (result == 0)
-					{
-						strcpy(send_buf, "1.0");
-					}
-					else if (result == 1)
-					{
-						strcpy(send_buf, "1.1.User exists");
-					}
-					else
-					{
-						strcpy(send_buf, "1.1.Too many users connected");
-					}
-
-					free(username);
+					login(users, ev->data.fd, recv_buf, send_buf);
 					break;
 				case '3':
 					printf("MessageTo\n");
@@ -131,6 +111,7 @@ int clHandler(struct epoll_event *ev)
 					break;
 				case '6':
 					printf("UserList\n");
+					user_list(users, send_buf);
 					break;
 				case '7':
 					printf("UserListReply\n");
@@ -180,7 +161,9 @@ int main(int argc, const char *argv[])
 	signal(SIGQUIT, closeSockets);
 
 	char ip[] = "127.0.0.1";
-	int port = 5501;
+	int port = PORT;
+
+
 
 	if (argc == 2)
 	{
@@ -192,6 +175,10 @@ int main(int argc, const char *argv[])
 	{
 		users[i].id = -1;
 	}
+
+	printf("port: %d\n", port);
+	fflush(stdout);
+
 
 
 	memset(&srv_addr, 0, sizeof(srv_addr));

@@ -83,10 +83,10 @@ int clHandler(struct epoll_event *ev)
 		{
 			int result = -1;
 
-			recv_buf = malloc(msg_len*sizeof(char));
-			send_buf = malloc(BUF_SIZE*sizeof(char));
-			memset(send_buf, 0, BUF_SIZE);
-			memset(recv_buf, 0, msg_len);
+			recv_buf = malloc(msg_len*sizeof(char)+1);
+			send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+			memset(send_buf, 0, BUF_SIZE+1);
+			memset(recv_buf, 0, msg_len+1);
 			read(ev->data.fd, recv_buf, msg_len);
 
 

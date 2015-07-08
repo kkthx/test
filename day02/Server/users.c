@@ -9,8 +9,6 @@ void login(user *users, int id, char *recv_buf, char *send_buf)
         memset(username, 0, strlen(recv_buf));
         memcpy(username, recv_buf+2, strlen(recv_buf)-2);
 
-        printf("len=%d, s='%s'", strlen(username), username);
-
         strcpy(send_buf, "1.1.Too many users connected");
         for (int i=0; i<MAXUSERS; ++i)
         {
@@ -30,8 +28,6 @@ void login(user *users, int id, char *recv_buf, char *send_buf)
                 break;
             }
         }
-
-
 
         free(username);
     }

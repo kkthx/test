@@ -3,7 +3,7 @@
 
 void login(user *users, int id, char *recv_buf)
 {
-	char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+    char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
     memset(send_buf, 0, BUF_SIZE+1);
 
     if (strlen(recv_buf) > 2 && recv_buf[0] == '2' && recv_buf[1] == '.')
@@ -88,9 +88,10 @@ void print_users(user *users)
     }
 }
 
+
 void user_list(user *users, int id)
 {
-	char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+    char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
     memset(send_buf, 0, BUF_SIZE+1);
 
     char userlist[BUF_SIZE];
@@ -114,34 +115,66 @@ void user_list(user *users, int id)
 
 void send_message(user *users, int id, char *recv_buf)
 {
-	char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
+    char *send_buf = malloc(BUF_SIZE*sizeof(char)+1);
     memset(send_buf, 0, BUF_SIZE+1);
 
     if (strlen(recv_buf) > 2 && (recv_buf[0] == '3' || recv_buf[0] == '5') && recv_buf[1] == '.')
     {
-        char *username = malloc(sizeof(char)*strlen(recv_buf));
-        memset(username, 0, strlen(recv_buf));
-        memcpy(username, recv_buf+2, strlen(recv_buf)-2);
+        char *buf = malloc(sizeof(char)*strlen(recv_buf));
+        //char *message = malloc(sizeof(char)*strlen(recv_buf));
 
-        strcpy(send_buf, "1.1.Unknown format");
+        memset(buf, 0, strlen(recv_buf));
+        memcpy(buf, recv_buf+2, strlen(recv_buf)-2);
 
-        for (int i=0; i<MAXUSERS; ++i)
+        if (strchr(buf, '.'))
         {
-            if (strcmp(username, users[i].username) == 0)
+            char *username;
+            char *message;
+            username = strtok(buf, ".");
+            message = strtok(NULL, ".");
+
+            if (recv_buf[0] == '3') //MessageTo
             {
-                strcpy(send_buf, "1.1.No such user");
-                break;
+                // check if user is logged in
+                // get sender username string
+                // send message to user
+                char *sender;
+                for (int i=0; i<MAXUSERS; ++i)
+                {
+                    if (users[i].id == id)
+                    {
+                        sender = users[i].id;
+                    }
+                }
+
+                strcpy(send_buf, "4.");
+                strcat(send_buf, sender);
+                strcat(send_buf, ".");
+                strcat(send_buf, message);
+                send_data(id, send_buf);
             }
+            else //Broadcast
+            {
+
+            }
+
+        }
+        else
+        {
+            strcpy(send_buf, "1.1.Unknown format");
+            send_data(id, send_buf);
         }
 
-        free(username);
+
+        free(buf);
     }
     else
     {
         strcpy(send_buf, "1.1.No user name set");
+        send_data(id, send_buf);
     }
 
-    send_data(id, send_buf);
+
 
     free(send_buf);
 }
@@ -156,5 +189,31 @@ void send_data(int *fd, char *send_data)
     write(fd, send_data, msg_len);
 
 }
+
+
+
+int get_user_id(user *users, char *username)
+{
+    for (int i=0; i<MAXUSERS; ++i)
+    {
+        if (strcmp(username, users[i].username) == 0)
+        {
+            return users[i].id;
+        }
+    }
+}
+
+char* get_user_name(user *users, int id)
+{
+    for (int i=0; i<MAXUSERS; ++i)
+    {
+        if (users[i].id == id)
+        {
+            return users[i].username;
+        }
+    }
+}
+
+
 
 

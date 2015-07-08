@@ -18,5 +18,7 @@ void user_list(user *users, int id);
 void send_message(user *users, int id, char *recv_buf);
 void send_data(int *fd, char *send_data);
 
+int get_user_id(user *users, char *username);
+char* get_user_name(user *users, int id);
 
 #endif

@@ -10,12 +10,12 @@ void login(user *users, int id, char *recv_buf, char *send_buf)
         memcpy(username, recv_buf+2, strlen(recv_buf)-2);
 
         strcpy(send_buf, "1.1.Too many users connected");
+
         for (int i=0; i<MAXUSERS; ++i)
         {
-
-            if (strcmp(username, users[i].username) == 0)
+            if (strcmp(username, users[i].username) == 0 || id == users[i].id)
             {
-                strcpy(send_buf, "1.1.User exists");
+                strcpy(send_buf, "1.1.User already logged in");
                 break;
             }
 

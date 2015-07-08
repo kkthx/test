@@ -2,3 +2,5 @@ Server/Server.layout
 Server/Server.depend
 Server/obj*
 Server/bin*
+Server/bin/*
+Server/obj/*

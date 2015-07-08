@@ -1,44 +1,32 @@
-#include <stdio.h>
+#include "main.h"
 
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/epoll.h>
-#include <arpa/inet.h>
-#include <signal.h>
 
 
-#include "defs.h"
-#include "users.h"
+static user users[MAXUSERS];
 
 
-user users[MAXUSERS];
+static int srv_fd = -1;
+static int cli_fd = -1;
+static int epoll_fd = -1;
+static struct epoll_event e, es[MAXUSERS];
 
 
-int srv_fd = -1;
-int cli_fd = -1;
-int epoll_fd = -1;
-struct epoll_event e, es[MAXUSERS];
 
-int i = 0;
+static size_t msg_len = -1;
 
-ssize_t msg_len = -1;
-
-struct sockaddr_in srv_addr;
-struct sockaddr_in cli_addr;
-socklen_t cli_addr_len;
+static struct sockaddr_in srv_addr;
+static struct sockaddr_in cli_addr;
+static socklen_t cli_addr_len;
 
 
 
 
 
-void closeSockets(void)
+void closeSockets(int sig)
 {
     printf("Closing server\n");
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
-    //close(cli_fd);
-    //close(epoll_fd);
-    //close(srv_fd);
 }
 
 
@@ -80,7 +68,6 @@ int clHandler(struct epoll_event *ev)
 
         if (read(ev->data.fd, &msg_len, sizeof(size_t)) > 0)
         {
-            int result = -1;
             recv_buf = malloc(msg_len*sizeof(char)+1);
             memset(recv_buf, 0, msg_len+1);
             read(ev->data.fd, recv_buf, msg_len);
@@ -123,7 +110,7 @@ int clHandler(struct epoll_event *ev)
         }
         else
         {
-            printf("Client disconnected %d\n", ev->data.fd);
+            printf("Client [%d] disconnected\n", ev->data.fd);
             delete_user_id(users, ev->data.fd);
 
             print_users(users);
@@ -136,6 +123,7 @@ int clHandler(struct epoll_event *ev)
         free(recv_buf);
     }
 
+	return 0;
 }
 
 
@@ -146,7 +134,7 @@ int main(int argc, const char *argv[])
     signal(SIGHUP, closeSockets);
     signal(SIGQUIT, closeSockets);
 
-    char ip[] = "127.0.0.1";
+
     int port = PORT;
 
 
@@ -181,7 +169,7 @@ int main(int argc, const char *argv[])
 
     srv_addr.sin_family = AF_INET;
     srv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    srv_addr.sin_port = htons(port);
+    srv_addr.sin_port = htons((uint16_t)port);
     if (bind(srv_fd, (struct sockaddr*) &srv_addr, sizeof(srv_addr)) < 0)
     {
         printf("Cannot bind socket\n");
@@ -216,7 +204,7 @@ int main(int argc, const char *argv[])
 
     for(;;)
     {
-        i = epoll_wait(epoll_fd, es, MAXUSERS, -1);
+		int i = epoll_wait(epoll_fd, es, MAXUSERS, -1);
         if (i < 0)
         {
             printf("Cannot wait for events\n");

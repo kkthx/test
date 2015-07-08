@@ -10,6 +10,6 @@
 #define BUF_SIZE 1024
 #define MAXUSERS 10
 
-#define PORT 5501
+#define PORT 5500
 
 #endif

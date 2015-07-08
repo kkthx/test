@@ -128,33 +128,45 @@ void send_message(user *users, int id, char *recv_buf)
 
         if (strchr(buf, '.'))
         {
-            char *username;
+            char *receiver;
             char *message;
-            username = strtok(buf, ".");
+            receiver = strtok(buf, ".");
             message = strtok(NULL, ".");
+
+
+            char *sender = get_user_name(users, id);
+            strcpy(send_buf, "4.");
+            strcat(send_buf, sender);
+            strcat(send_buf, ".");
+            strcat(send_buf, message);
 
             if (recv_buf[0] == '3') //MessageTo
             {
-                // check if user is logged in
+                // check if receiver is logged in
                 // get sender username string
                 // send message to user
-                char *sender;
-                for (int i=0; i<MAXUSERS; ++i)
-                {
-                    if (users[i].id == id)
-                    {
-                        sender = users[i].id;
-                    }
-                }
 
-                strcpy(send_buf, "4.");
-                strcat(send_buf, sender);
-                strcat(send_buf, ".");
-                strcat(send_buf, message);
-                send_data(id, send_buf);
+                if (get_user_id(users, receiver) != -1)
+                {
+                    send_data(get_user_id(users, receiver), send_buf);
+                }
+                else
+                {
+                    strcpy(send_buf, "1.1.User is not logged in");
+                    send_data(id, send_buf);
+                }
             }
             else //Broadcast
             {
+                // for over all users where id != -1 and id != sender
+                int sender_id = get_user_id(users, sender);
+                for (int i=0; i<MAXUSERS; ++i)
+                {
+                    if (users[i].id != -1 && users[i].id != sender_id)
+                    {
+                         send_data(users[i].id, send_buf);
+                    }
+                }
 
             }
 
@@ -165,7 +177,6 @@ void send_message(user *users, int id, char *recv_buf)
             send_data(id, send_buf);
         }
 
-
         free(buf);
     }
     else
@@ -174,23 +185,15 @@ void send_message(user *users, int id, char *recv_buf)
         send_data(id, send_buf);
     }
 
-
-
     free(send_buf);
 }
 
-
-void send_data(int *fd, char *send_data)
+void send_data(int fd, char *send_data)
 {
-
     size_t msg_len = strlen(send_data)+1;
-
     write(fd, &msg_len, sizeof(size_t));
     write(fd, send_data, msg_len);
-
 }
-
-
 
 int get_user_id(user *users, char *username)
 {
@@ -201,6 +204,8 @@ int get_user_id(user *users, char *username)
             return users[i].id;
         }
     }
+
+    return -1;
 }
 
 char* get_user_name(user *users, int id)
@@ -212,6 +217,8 @@ char* get_user_name(user *users, int id)
             return users[i].username;
         }
     }
+
+    return NULL;
 }
 
 

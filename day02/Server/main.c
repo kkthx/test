@@ -140,6 +140,7 @@ int clHandler(struct epoll_event *ev)
 		else //
 		{
 			printf("Client disconnected %d\n", ev->data.fd);
+			print_users(users);
 			fflush(stdout);
 
 			close(ev->data.fd);

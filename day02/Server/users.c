@@ -56,23 +56,13 @@ int delete_user(user *users, char *username)
     return 1;
 }
 
-char* print_users(user *users)
+void print_users(user *users)
 {
-    char userlist[BUF_SIZE];
-    strcpy(userlist, "7");
-    printf("userlist: %s\n", userlist);
+    printf("userlist: \n");
     for (int i=0; i<MAXUSERS; ++i)
     {
         printf("%02d: %02d %s\n", i, users[i].id, users[i].username);
-        if (users[i].id != -1)
-        {
-            strcat(userlist, ".");
-            strcat(userlist, users[i].username);
-            printf("userlist: %s\n", userlist);
-        }
     }
-    printf("userlist: %s\n", userlist);
-    return userlist;
 }
 
 void user_list(user *users, char *send_buf)
@@ -81,7 +71,6 @@ void user_list(user *users, char *send_buf)
     strcpy(userlist, "7");
     for (int i=0; i<MAXUSERS; ++i)
     {
-        printf("%02d: %02d %s\n", i, users[i].id, users[i].username);
         if (users[i].id != -1)
         {
             strcat(userlist, ".");

@@ -4,3 +4,8 @@ Server/obj*
 Server/bin*
 Server/bin/*
 Server/obj/*
+bin/
+obj/
+*.o
+*.depend
+*.layout

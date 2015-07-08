@@ -1,13 +1,11 @@
 #include <stdio.h>
 
-#include <unistd.h>
-#include <string.h>
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <stdbool.h>
 
 
 #include "defs.h"
@@ -34,7 +32,7 @@ socklen_t cli_addr_len;
 
 
 
-void closeSockets(int arg)
+void closeSockets(void)
 {
 	printf("Closing server\n");
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cli_fd, &e);
@@ -64,6 +62,8 @@ int svHandler(void)
 		close(srv_fd);
 		return 1;
 	}
+
+	return 0;
 }
 
 
@@ -92,9 +92,6 @@ int clHandler(struct epoll_event *ev)
 
 			switch (recv_buf[0])
 			{
-				case '1':
-					printf("AckNack\n");
-					break;
 				case '2':
 					printf("LogIn\n");
 					login(users, ev->data.fd, recv_buf, send_buf);
@@ -103,21 +100,16 @@ int clHandler(struct epoll_event *ev)
 					printf("MessageTo\n");
                     printf("recv=%s\n", recv_buf);
 					break;
-				case '4':
-					printf("MessageFrom\n");
-					break;
 				case '5':
 					printf("Broadcast\n");
 					break;
 				case '6':
 					printf("UserList\n");
 					user_list(users, send_buf);
-					break;
-				case '7':
-					printf("UserListReply\n");
+					print_users(users);
 					break;
 				default:
-					printf("Unknown message: %s\n", recv_buf);
+					printf("1.1.Unknown message: %s\n", recv_buf);
 					break;
 			}
 
@@ -140,6 +132,8 @@ int clHandler(struct epoll_event *ev)
 		else //
 		{
 			printf("Client disconnected %d\n", ev->data.fd);
+			delete_user_id(users, ev->data.fd);
+
 			print_users(users);
 			fflush(stdout);
 

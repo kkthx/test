@@ -46,7 +46,24 @@ int delete_user(user *users, char *username)
         //user exists, delete then
         if (strcmp(username, users[i].username) == 0)
         {
-            memcpy(users[i].username, 0, 1);
+            strcpy(users[i].username, "");
+            users[i].id = -1;
+            return 0;
+        }
+    }
+
+    //user not found
+    return 1;
+}
+
+int delete_user_id(user *users, int id)
+{
+    for (int i=0; i<MAXUSERS; ++i)
+    {
+        //user exists, delete then
+        if (users[i].id == id)
+        {
+            strcpy(users[i].username, "");
             users[i].id = -1;
             return 0;
         }

@@ -2,24 +2,27 @@
 
 
 
+/*
+
+- klienckie zmienne do lokalnego
+- epoll dodatkowe bledy obsluga
+
+
+*/
+
 
 static user users[MAXUSERS];
-
 
 static int srv_fd = -1;
 static int cli_fd = -1;
 static int epoll_fd = -1;
 static struct epoll_event e, es[MAXUSERS];
 
-
-
 static size_t msg_len = -1;
 
 static struct sockaddr_in srv_addr;
-static struct sockaddr_in cli_addr;
+static struct sockaddr_in cli_addr; //// do local scope'a
 static socklen_t cli_addr_len;
-
-
 
 
 
@@ -62,7 +65,11 @@ int clHandler(struct epoll_event *ev)
 
     printf("data.fd = %d\n", ev->data.fd);
     fflush(stdout);
-    if (ev->events & EPOLLIN)
+    if (!(ev->events & EPOLLIN))
+    {
+
+    }
+    else if (ev->events & EPOLLIN)
     {
         char *recv_buf = 0;
 
@@ -93,7 +100,8 @@ int clHandler(struct epoll_event *ev)
                 print_users(users);
                 break;
             default:
-				; //hack: http://stackoverflow.com/a/1181106
+				; // hack !!
+				// http://stackoverflow.com/a/1181106
 				// http://stackoverflow.com/questions/92396/why-cant-variables-be-declared-in-a-switch-statement
                 char *send_buf = 0;
                 send_buf = malloc(BUF_SIZE*sizeof(char)+1);

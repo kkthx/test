@@ -31,9 +31,15 @@
 		<Compiler>
 			<Add option="-Weverything" />
 		</Compiler>
+		<Unit filename="defs.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="main.h" />
+		<Unit filename="users.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="users.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
